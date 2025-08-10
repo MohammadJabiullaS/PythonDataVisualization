@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sales Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 20px;
+    background: #f4f7f9;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  /*Table */
+  table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #4CAF50; /* Green border for the table */
+}
+
+th, td {
+  border: 1px solid #ddd; /* Light gray border for cells */
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #4CAF50; /* Green background for headers */
+  color: white; /* White text for headers */
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2; /* Light gray for even rows */
+}
+
+tr:hover {
+  background-color: #ddd; /* Darker gray on hover */
+}
+
+  /* Dashboard container */
+  .dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit,minmax(280px, 1fr));
+  }
+
+  /* Stat card styles */
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    color: #555;
+  }
+  .stat-card .label {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #777;
+  }
+  .stat-card .value {
+    font-size: 2.2rem;
+    color: #2a9d8f;
+  }
+
+  /* Chart container styles */
+  .chart-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+
+  .chart-card h3 {
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    color: #264653;
+    font-size: 1.3rem;
+  }
+
+  /* Placeholder chart style */
+  .chart-placeholder {
+    height: 200px;
+    background: #e9ecef;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #999;
+    font-style: italic;
+    user-select: none;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 480px) {
+    body {
+      padding: 10px;
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+    }
+    .chart-card h3 {
+      font-size: 1.1rem;
+    }
+  }
+  #myBarChart {
+            width: 80%;
+            height: 400px;
+            margin: 20px auto;
+        }
+</style>
+</head>
+<body>
+
+<h1>Sales Dashboard</h1>
+
+<div class="dashboard">
+  <!-- Stats -->
+  <div class="stat-card">
+    <div class="label">Total Products</div>
+    <div class="value" id="unique-products">{{productCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Total Customers</div>
+    <div class="value" id="total-customers">{{customerCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Unique Years</div>
+    <div class="value" id="unique-years">
+      {% for year in years %}<li>{{ year }}</li>{% endfor %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Total Profit</div>
+    <div class="value" id="total-profit">${{profit}}</div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-card">
+    <h3>Yearly Product Quantity</h3>
+    <div class="chart-placeholder" id="yearly-quantity">
+      <script>
+        //data
+        const quantity_data = {{quantity | tojson}};
+        // Get the container where the table will be placed
+        const quantityContainer = document.getElementById('yearly-quantity');
+
+        // Create the table element
+        const quantityTable = document.createElement('table');
+
+        // Create the table header
+        const qthead = document.createElement('thead');
+        const qheaderRow = document.createElement('tr');
+        const qthYear = document.createElement('th');
+        qthYear.textContent = 'Year';
+        const qthQuantity = document.createElement('th');
+        qthQuantity.textContent = 'Quantity';
+        qheaderRow.appendChild(qthYear);
+        qheaderRow.appendChild(qthQuantity);
+        qthead.appendChild(qheaderRow);
+        quantityTable.appendChild(qthead);
+
+        // Create the table body
+        const qtbody = document.createElement('tbody');
+
+        // Iterate through the dictionary and create table rows
+        for (const year in quantity_data) {
+            if (quantity_data.hasOwnProperty(year)) {
+                const quantity = quantity_data[year];
+
+                const qrow = document.createElement('tr');
+
+                const qtdYear = document.createElement('td');
+                qtdYear.textContent = year;
+
+                const qtdQuantity = document.createElement('td');
+                qtdQuantity.textContent = quantity;
+
+                qrow.appendChild(qtdYear);
+                qrow.appendChild(qtdQuantity);
+                qtbody.appendChild(qrow);
+            }
+        }
+
+        quantityTable.appendChild(qtbody);
+
+        // Append the table to the container
+        quantityContainer.appendChild(quantityTable);
+    </script>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>Yearly Product Sales</h3>
+    <div class="chart-placeholder" id="yearly_sales">
+      <script>
+        //data
+        const salesdata = {{sales_yearly | tojson}};
+        // Get the container where the table will be placed
+        const salesContainer = document.getElementById('yearly_sales');
+
+        // Create the table element
+        const salesTable = document.createElement('table');
+
+        // Create the table header
+        const sthead = document.createElement('thead');
+        const sheaderRow = document.createElement('tr');
+        const sthYear = document.createElement('th');
+        sthYear.textContent = 'Year';
+        const sthSales = document.createElement('th');
+        sthSales.textContent = 'Sales';
+        sheaderRow.appendChild(sthYear);
+        sheaderRow.appendChild(sthSales);
+        sthead.appendChild(sheaderRow);
+        salesTable.appendChild(sthead);
+
+        // Create the table body
+        const stbody = document.createElement('tbody');
+
+        // Iterate through the dictionary and create table rows
+        for (const year in salesdata) {
+            if (salesdata.hasOwnProperty(year)) {
+                const sales = salesdata[year];
+                const srow = document.createElement('tr');
+                const stdYear = document.createElement('td');
+                stdYear.textContent = year;
+
+                const stdSales = document.createElement('td');
+                stdSales.textContent = sales;
+
+                srow.appendChild(stdYear);
+                srow.appendChild(stdSales);
+                stbody.appendChild(srow);
+            }
+        }
+
+        salesTable.appendChild(stbody);
+
+        // Append the table to the container
+        salesContainer.appendChild(salesTable);
+    </script>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Yearly Profit & Loss</h3>
+    <div class="chart-placeholder" id="yearly_earnings">
+      <script>
+        //data
+        const profitlossdata = {{earning_yearly | tojson}};
+        // Get the container where the table will be placed
+        const profitlossContainer = document.getElementById('yearly_earnings');
+
+        // Create the table element
+        const profitlossTable = document.createElement('table');
+
+        // Create the table header
+        const plthread = document.createElement('thead');
+        const plheaderRow = document.createElement('tr');
+        const plthYear = document.createElement('th');
+        plthYear.textContent = 'Year';
+        const plthprofitloss = document.createElement('th');
+        plthprofitloss.textContent = 'Profit/Loss';
+        plheaderRow.appendChild(plthYear);
+        plheaderRow.appendChild(plthprofitloss);
+        plthread.appendChild(plheaderRow);
+        profitlossTable.appendChild(plthread);
+
+        // Create the table body
+        const pltbody = document.createElement('tbody');
+
+        // Iterate through the dictionary and create table rows
+        for (const year in profitlossdata) {
+            if (profitlossdata.hasOwnProperty(year)) {
+                const profitloss = profitlossdata[year];
+                const plrow = document.createElement('tr');
+                const pltdYear = document.createElement('td');
+                pltdYear.textContent = year;
+
+                const pltdProfitloss = document.createElement('td');
+                pltdProfitloss.textContent = profitloss;
+
+                plrow.appendChild(pltdYear);
+                plrow.appendChild(pltdProfitloss);
+                pltbody.appendChild(plrow);
+            }
+        }
+
+        profitlossTable.appendChild(pltbody);
+
+        // Append the table to the container
+        profitlossContainer.appendChild(profitlossTable);
+    </script>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Yearly Discount</h3>
+    <div class="chart-placeholder" id="yearly_discount">
+      <script>
+        //data
+        const discountdata = {{yearly_discount | tojson}};
+        // Get the container where the table will be placed
+        const disyearContainer = document.getElementById('yearly_discount');
+
+        // Create the table element
+        const discountTable = document.createElement('table');
+
+        // Create the table header
+        const disthread = document.createElement('thead');
+        const disheaderRow = document.createElement('tr');
+        const disthYear = document.createElement('th');
+        disthYear.textContent = 'Year';
+        const disthdisyear = document.createElement('th');
+        disthdisyear.textContent = 'Discount';
+        disheaderRow.appendChild(disthYear);
+        disheaderRow.appendChild(disthdisyear);
+        disthread.appendChild(disheaderRow);
+        discountTable.appendChild(disthread);
+
+        // Create the table body
+        const distbody = document.createElement('tbody');
+
+        // Iterate through the dictionary and create table rows
+        for (const year in discountdata) {
+            if (discountdata.hasOwnProperty(year)) {
+                const disyear = discountdata[year];
+                const disrow = document.createElement('tr');
+                const distdYear = document.createElement('td');
+                distdYear.textContent = year;
+
+                const distddisyear = document.createElement('td');
+                distddisyear.textContent = disyear;
+
+                disrow.appendChild(distdYear);
+                disrow.appendChild(distddisyear);
+                distbody.appendChild(disrow);
+            }
+        }
+
+        discountTable.appendChild(distbody);
+
+        // Append the table to the container
+        disyearContainer.appendChild(discountTable);
+    </script>
+    </div>
+  </div>
+
+  <div class="chart-card" style="grid-column: span 2;">
+    <h3>Yearly Shipping Data</h3>
+    <div class="chart-placeholder" style="height: 300px;">
+      <table id="shipping_table"></table>
+      <script>
+        // Python dictionary converted to JSON
+        const shipping_mode_data ={{ship_mode | tojson}};
+
+        const table = document.getElementById("shipping_table");
+
+        // Get column headers: Year + all unique classes
+        const classes = [...new Set(Object.values(shipping_mode_data).flatMap(Object.keys))];
+        const headers = ["Year", ...classes];
+
+        // Build header row
+        table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+
+        // Build data rows
+        Object.entries(shipping_mode_data).forEach(([year, classCounts]) => {
+            const row = [year, ...classes.map(c => classCounts[c] ?? 0)];
+            table.innerHTML += `<tr>${row.map(v => `<td>${v}</td>`).join("")}</tr>`;
+        });
+    </script>
+    </div>
+  </div>
+
+  <div class="chart-card" style="grid-column: span 2;">
+    <h3>Yearly Sales-Profit-Quantity</h3>
+    <div class="chart-placeholder" style="height: 300px;">
+      <textarea id="myTextArea" style="height: 300px; width: 100%"></textarea>
+        <script>
+        const summary ={{summary | tojson}};
+        const textarea = document.getElementById("myTextArea");
+        for (const year of Object.keys(summary).sort()) {
+        textarea.value +=`\nYear: ${year}`;
+        for (const [state, data] of Object.entries(summary[year])) {
+        textarea.value +=`\nState: ${state} | Sales: ${data.Sales.toFixed(2)} | Profit: ${data.Profit.toFixed(2)} | Quantity: ${data.Quantity}`;
+        }
+        }
+        </script>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
